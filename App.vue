@@ -1,5 +1,11 @@
 <script>
 	export default {
+		data() {
+		    return {
+				rpa1: 'https://rpa.haqh.com:8088',
+				rpa2: 'https://rpa.slave.haqh.com:8088'
+		    }
+		},
 		onLaunch: function() {
 			console.log('App Launch');
 		},

@@ -7,11 +7,13 @@
 			</view>
 			<button type="primary" size="mini" @tap="ava_change('next')" style="right: 10%;">右</button>
 		</view>
-        <view class="input-group" style="margin-top: 20px;background-color: none;">
+        <view class="input-group" style="margin-top: 20px;">
             <view class="input-row">
                 <input class="m-input" type="text" clearable focus v-model="account" placeholder="姓名"></input>
             </view>
-            <view class="input-row" style="margin-top:30px;">
+        </view> 
+		<view class="input-group">
+            <view class="input-row">
                 <input type="number" displayable clearable v-model="zjzh" placeholder="资金账号"></input>
             </view>
         </view>
@@ -19,9 +21,9 @@
             <button type="primary" class="primary" @tap="bindLogin">下一步</button>
         </view>
         <view class="action-row">
-            <navigator url="../reg/reg">注册账号</navigator>
+            <navigator url="./idLogin">忘记账号</navigator>
             <text>|</text>
-            <navigator url="../pwd/pwd">忘记密码</navigator>
+            <navigator url="../KH/kh">新开户</navigator>
         </view>
         <view class="oauth-row" v-if="hasProvider" v-bind:style="{top: positionTop + 'px'}">
             <view class="oauth-image" v-for="provider in providerList" :key="provider.value">
@@ -89,44 +91,39 @@
                 this.positionTop = uni.getSystemInfoSync().windowHeight - 100;
             },
             bindLogin() {
-                /**
-                 * 客户端对账号信息进行一些必要的校验。
-                 * 实际开发中，根据业务需要进行处理，这里仅做示例。
-                 */
-                if (this.account.length < 5) {
+                if (this.account.length < 1) {
                     uni.showToast({
                         icon: 'none',
-                        title: '账号最短为 5 个字符'
+                        title: '姓名不能为空'
                     });
                     return;
                 }
-                if (this.zjzh.length < 6) {
+                if (!this.zjzh.replace('/[^\d]/g', '')) {
                     uni.showToast({
                         icon: 'none',
-                        title: '密码最短为 6 个字符'
+                        title: '请输入正确的资金账号！'
                     });
                     return;
                 }
-                /**
-                 * 下面简单模拟下服务端的处理
-                 * 检测用户账号密码是否在已注册的用户列表中
-                 * 实际开发中，使用 uni.request 将账号信息发送至服务端，客户端在回调函数中获取结果信息。
-                 */
-                const data = {
-                    account: this.account,
-                    password: this.zjzh
-                };
-                const validUser = service.getUsers().some(function (user) {
-                    return data.account === user.account && data.password === user.password;
-                });
-                if (validUser) {
-                    this.toMain(this.account);
-                } else {
-                    uni.showToast({
-                        icon: 'none',
-                        title: '用户账号或密码不正确',
-                    });
-                }
+				let _self = this;
+				uni.request({
+					url: 'https://rpa.slave.haqh.com:8088',
+					data: {account:this.account, zjzh:this.zjzh},
+					method: 'POST',
+					dataType: 'json',
+					success: (json) => {
+						if (200 != json.code) {
+						    _self.toMain(_self.account);
+						} else {
+						    uni.showToast({
+						        icon: 'none',
+						        title: '姓名或资金账号不正确',
+						    });
+						}
+					},fail: (e)=>{
+						console.log(e);
+					}
+				});
             },
             oauth(value) {
                 uni.login({
@@ -135,6 +132,7 @@
                         uni.getUserInfo({
                             provider: value,
                             success: (infoRes) => {
+								console.log(infoRes);
                                 /**
                                  * 实际开发中，获取用户信息后，需要将信息上报至服务端。
                                  * 服务端可以用 userInfo.openId 作为用户的唯一标识新增或绑定用户信息。
@@ -156,7 +154,7 @@
                  */
                 if (this.forcedLogin) {
                     uni.reLaunch({
-                        url: '../main/main',
+                        url: '../HA-chat/chat',
                     });
                 } else {
                     uni.navigateBack();
@@ -177,6 +175,9 @@
 				}
 				this.img = img;
 				this.src = this.dir + this.srcList[img];
+			},
+			go(url){
+				window.location.href = url;
 			}
         },
 		//设置初始头像
